@@ -10,6 +10,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/TGCARDistributedMLTracker" />
+            <option value="$PROJECT_DIR$/TGCARDistributedMLTracker/app" />
           </set>
         </option>
       </GradleProjectSettings>
