@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="18146742-81e9-43a7-856c-e9c8b5249181" name="Changes" comment="Engine Class">
+      <change afterPath="$PROJECT_DIR$/../../../../../.idea/deploymentTargetSelector.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../../../../Backend/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../../../../Backend/.idea/DearAstoriaBackend.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../../../../Backend/.idea/caches/deviceStreaming.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../../../../Backend/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../../../../Backend/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../../../../Backend/Cards/Card_001.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../../../../Backend/Cards/Card_Template.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/Engine.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/EngineClass.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/GameState.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Operations/.idea/Operations.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Operations/.idea/caches/deviceStreaming.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Operations/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Operations/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Operations/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Operations/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Operations/DealDamage.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Operations/Heal.kt" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../../../.." />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "DanielMCastro"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/DearAstoria/TGC.git",
+    "accountId": "316eb7bb-73bb-429c-ab68-83d51305dfe9"
+  }
+}]]></component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 6
+}]]></component>
+  <component name="ProjectId" id="39AuUMnrG7GkJfiMVpWPUxVXGlq" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/dmcas/StudioProjects/TGC/networking TGC/client/server/trading card game/Engine"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="18146742-81e9-43a7-856c-e9c8b5249181" name="Changes" comment="" />
+      <created>1770151210228</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1770151210228</updated>
+    </task>
+    <task id="LOCAL-00001" summary="Engine Class">
+      <option name="closed" value="true" />
+      <created>1770151277261</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1770151277261</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
+    <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Engine Class" />
+    <option name="LAST_COMMIT_MESSAGE" value="Engine Class" />
+  </component>
+</project>
