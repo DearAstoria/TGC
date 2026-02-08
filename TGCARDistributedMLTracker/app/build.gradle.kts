@@ -5,14 +5,12 @@ plugins {
 
 android {
     namespace = "com.example.tgcardistributedmltracker"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.tgcardistributedmltracker"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -28,30 +26,33 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     buildFeatures {
         compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.15" 
     }
 }
 
 dependencies {
-    // Jetpack + Compose (keep your existing ones)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
+    // Jetpack + Compose
+    implementation(platform("androidx.compose:compose-bom:2024.12.01"))
+    implementation("androidx.compose.runtime:runtime")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.activity:activity-compose")
 
     // ARCore
     implementation("com.google.ar:core:1.41.0")
 
-    // SceneView for 3D & AR
+    // SceneView 3D + AR
     implementation("io.github.sceneview:sceneview:2.2.1")
     implementation("io.github.sceneview:arsceneview:2.2.1")
 }
