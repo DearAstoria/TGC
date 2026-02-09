@@ -11,6 +11,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.TGCARDistributedMLTracker">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -18,10 +19,21 @@
             android:theme="@style/Theme.TGCARDistributedMLTracker">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-    </application>
 
+        <activity
+            android:name=".ARActivity"
+            android:exported="true"
+            android:label="AR Activity"
+            android:theme="@style/Theme.TGCARDistributedMLTracker" />
+
+        <activity
+            android:name=".ModelViewerActivity"
+            android:exported="true"
+            android:label="Model Viewer"
+            android:theme="@style/Theme.TGCARDistributedMLTracker" />
+
+    </application>
 </manifest>
