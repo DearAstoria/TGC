@@ -1,0 +1,33 @@
+{
+	"folders": [
+		{
+			"path": "../../Trading Card Game"
+		},
+		{
+			"name": "TGC-Networking",
+			"path": "../../../.vscode/TGC-Networking"
+		},
+		{
+			"name": "TGC-1",
+			"path": "../../../.ssh/TGC-1"
+		},
+		{
+			"name": "TGC",
+			"path": "../../../.git/TGC"
+		},
+		{
+			"name": "TGC",
+			"path": "../../../.vscode/TGC"
+		},
+		{
+			"name": "TGC-2",
+			"path": "../../../.ssh/TGC-2"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"git.ignoreLimitWarning": true
+	}
+}
