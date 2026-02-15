@@ -40,3 +40,10 @@ def generate_synthetic_image(card_img_path, bg_img_path, output_path):
     
     # 4. Generate Bounding Box for labels
     # (Calculate min/max X and Y from dst_pts to get your YOLO coords)
+
+if __name__ == "__main__":
+    card_img_path = "C:\\Users\\Jaden\\AndroidStudioProjects\\TGCARDistributedMLTracker_Daddy\\ml_pipeline\\source_cards"  # Path to the card images
+    bg_img_path = "C:\\Users\\Jaden\\AndroidStudioProjects\\TGCARDistributedMLTracker_Daddy\\ml_pipeline\\backgrounds"  # Path to the background images
+    output_path = "C:\\Users\\Jaden\\AndroidStudioProjects\\TGCARDistributedMLTracker_Daddy\\ml_pipeline\\generated_dataset"  # Path to save the generated images
+
+    generate_synthetic_image(card_img_path, bg_img_path, output_path)

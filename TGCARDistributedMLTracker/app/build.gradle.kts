@@ -29,8 +29,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true
@@ -55,8 +55,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     // Used for ML & AR (ARCore)
-    implementation("com.google.ar:core:1.41.0")
-
+    implementation(libs.google.ar.core)
     // SceneView 3D & AR Rendering
-    implementation("io.github.sceneview:arsceneview:2.2.1")
+    implementation(libs.sceneview.ar)
 }
