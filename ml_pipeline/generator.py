@@ -25,7 +25,7 @@ def save_yolo_label(dst_pts, img_w, img_h, class_id, label_path, img_num):
     norm_h = height / img_h
     
     # 4. Save to .txt file
-    with open(label_path + str(img_num) + ".jpg", 'w') as f:
+    with open(label_path + ".txt", 'w') as f:
         f.write(f"{class_id} {norm_x:.6f} {norm_y:.6f} {norm_w:.6f} {norm_h:.6f}\n")
 
 # --- Usage inside the generation loop ---
@@ -76,8 +76,8 @@ def generate_synthetic_image(card_img_path, bg_img_path, output_path, id, label_
 if __name__ == "__main__":
     card_img_path = "C:\\Users\\Jaden\\AndroidStudioProjects\\TGCARDistributedMLTracker_Daddy\\ml_pipeline\\source_cards"  # Path to the card images
     bg_img_path = "C:\\Users\\Jaden\\AndroidStudioProjects\\TGCARDistributedMLTracker_Daddy\\ml_pipeline\\backgrounds"  # Path to the background images
-    output_path = "C:\\Users\\Jaden\\AndroidStudioProjects\\TGCARDistributedMLTracker_Daddy\\ml_pipeline\\generated_dataset"  # Path to save the generated images
-    label_path = "C:\\Users\\Jaden\\AndroidStudioProjects\\TGCARDistributedMLTracker_Daddy\\ml_pipeline\\yolo_labels"  # Path to save the labels
+    output_path = "C:\\Users\\Jaden\\AndroidStudioProjects\\TGCARDistributedMLTracker_Daddy\\ml_pipeline\\generated_dataset\\images\\generated_dataset_"  # Path to save the generated images
+    label_path = "C:\\Users\\Jaden\\AndroidStudioProjects\\TGCARDistributedMLTracker_Daddy\\ml_pipeline\\generated_dataset\\yolo_labels\\yolo_labels_"  # Path to save the labels
     Card_IMG_Path = Path(card_img_path)
     BG_IMG_Path = Path(bg_img_path)
     num_images = 0
