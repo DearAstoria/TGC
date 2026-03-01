@@ -1,0 +1,5 @@
+train: ../generated_dataset/images/train
+val: ../generated_dataset/images/val
+
+nc: 4  # Number of Classes/cards
+names: ['Bulb_Wiz', 'Char', 'Grim', 'Mage']
