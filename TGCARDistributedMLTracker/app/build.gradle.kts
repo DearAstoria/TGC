@@ -38,7 +38,6 @@ android {
 }
 
 dependencies {
-    // Jetpack + Compose
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -47,20 +46,17 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
-
-    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    // ARCore
+    // Used for ML & AR (ARCore)
     implementation("com.google.ar:core:1.41.0")
 
-    // SceneView 3D & AR
-    implementation("io.github.sceneview:sceneview:2.2.1")
+    // SceneView 3D & AR Rendering
     implementation("io.github.sceneview:arsceneview:2.2.1")
 }

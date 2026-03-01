@@ -2,22 +2,19 @@
 <project version="4">
   <component name="deploymentTargetSelector">
     <selectionStates>
-      <SelectionState runConfigName="TGC_AR_Distributed_ML_Tracker.app">
+      <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="ModelViewerActivity">
+      <SelectionState runConfigName="Adam_TCG_AR_FINAL.app.main">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="ARActivity (2)">
+      <SelectionState runConfigName="Adam_TCG_AR_FINAL.app.unitTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="ARActivity (3)">
+      <SelectionState runConfigName="Adam_TCG_AR_FINAL.app.androidTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="ARActivity (4)">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
-      <SelectionState runConfigName="ARActivity">
+      <SelectionState runConfigName="Adam_TCG_AR_FINAL.app">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>
