@@ -22,9 +22,13 @@ import io.github.sceneview.node.ModelNode
 import io.github.sceneview.ar.node.AnchorNode
 import android.view.GestureDetector // <--vv Needed for modern implementations
 import android.view.MotionEvent
+import androidx.compose.ui.platform.LocalContext
 import com.google.ar.core.Config
 import com.google.ar.core.Plane
 import io.github.sceneview.ar.rememberARCameraStream
+import io.github.sceneview.loaders.MaterialLoader
+import androidx.compose.runtime.remember
+import io.github.sceneview.rememberEngine
 
 
 class ARActivity : ComponentActivity() {
@@ -32,8 +36,11 @@ class ARActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             TGCARDistributedMLTrackerTheme {
-
+                var engine = rememberEngine()
                 var arSceneView: ARSceneView? = null
+                val context = LocalContext.current
+                val materialLoader = remember { io.github.sceneview.loaders.MaterialLoader(engine,context) }
+
 
                 ARScene(
                     // Configure AR session features
