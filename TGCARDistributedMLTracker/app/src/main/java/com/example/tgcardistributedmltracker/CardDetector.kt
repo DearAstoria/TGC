@@ -1,5 +1,6 @@
 package com.example.tgcardistributedmltracker
 
+import android.content.Context
 // Core TFLite Interpreter imports
 import org.tensorflow.lite.Interpreter
 //import org.tensorflow.lite.GpuDelegate This will take a few steps
@@ -8,13 +9,14 @@ import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
 
 
-class CardDetector {
+class CardDetector(context: Context) {
     val options = Interpreter.Options().apply {
         setNumThreads(4)
         // GPU acceleration:
 //         addDelegate(GpuDelegate())
     }
-    val tfliteModel = FileUtil.loadMappedFile(context(), "/../assets/best_int8.tflite")
+    private val tfliteModel = FileUtil.loadMappedFile(context, "best_int8.tflite")
+
     val interpreter = Interpreter(tfliteModel, options)
 
 }
