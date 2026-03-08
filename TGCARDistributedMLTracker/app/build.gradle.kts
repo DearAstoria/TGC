@@ -55,6 +55,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    // In order to use the model
     implementation("org.tensorflow:tensorflow-lite:2.17.0")
     implementation("org.tensorflow:tensorflow-lite-gpu:2.17.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.5.0")
@@ -63,4 +64,6 @@ dependencies {
     implementation(libs.google.ar.core)
     // SceneView 3D & AR Rendering
     implementation(libs.sceneview.ar)
+    // In order to send moves to the server
+    implementation("io.socket:socket.io-client:2.1.0")
 }
