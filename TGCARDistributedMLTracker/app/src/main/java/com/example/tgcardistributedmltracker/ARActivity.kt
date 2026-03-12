@@ -79,6 +79,7 @@ class ARActivity : ComponentActivity() {
                     // Frame update callback
                     onSessionUpdated = { session, updatedFrame ->
                         // Process AR frame updates
+
                     },
 
                     // Error handling
@@ -90,6 +91,7 @@ class ARActivity : ComponentActivity() {
                     onTrackingFailureChanged = { trackingFailureReason ->
                         // Handle tracking failures
                     }
+
                 )
 
 //                ARScene(
