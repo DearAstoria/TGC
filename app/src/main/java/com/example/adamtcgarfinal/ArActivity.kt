@@ -1,5 +1,15 @@
+import android.media.Image
 import android.os.Bundle
+import android.view.MotionEvent
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.xr.arcore.HitResult
+import com.google.ar.sceneform.ArSceneView
 
 class ARActivity : ComponentActivity() {
 
@@ -27,7 +37,7 @@ class ARActivity : ComponentActivity() {
                             val modelLoader = ModelLoader(arSceneView.engine, context)
 
                             arSceneView.onTapAr =
-                                { hitResult: HitResult, _: Plane, _: MotionEvent ->
+                                { hitResult: HitResult, _: Image.Plane, _: MotionEvent ->
 
                                     val anchorNode =
                                         arSceneView.createAnchorNode(hitResult)

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.tgcardistributedmltracker.ui.theme.TGCARDistributedMLTrackerTheme
-import com.google.ar.sceneform.SceneView
 import io.github.sceneview.SceneView
 import io.github.sceneview.node.ModelNode
 import io.github.sceneview.loaders.ModelLoader

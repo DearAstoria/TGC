@@ -10,8 +10,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.example.tgcardistributedmltracker.ui.theme.TGCARDistributedMLTrackerTheme
 import io.github.sceneview.SceneView
 import io.github.sceneview.node.ModelNode
-import io.github.sceneview.renderable.ModelRenderable
-import io.github.sceneview.utils.toUri
+import io.github.sceneview.math.Rotation
+import io.github.sceneview.math.Scale
 
 class ModelViewerActivity : ComponentActivity() {
 
@@ -27,14 +27,13 @@ class ModelViewerActivity : ComponentActivity() {
                             val sceneView = SceneView(context)
 
                             // Create a ModelNode to hold your 3D model
-                            val modelNode = ModelNode().apply {
-                                renderable = ModelRenderable.loadModel(
-                                    context,
-                                    "models/card_template.glb".toUri()
+                            val modelNode = ModelNode(sceneView.engine).apply {
+                                loadModelGlbAsync(
+                                    glbFileLocation = "models/card_template.glb"
                                 )
                                 // Optional: scale and rotation
-                                localScale.set(0.5f, 0.5f, 0.5f)
-                                localRotation.set(0f, 180f, 0f)
+                                scale = Scale(0.5f)
+                                rotation = Rotation(0f, 180f, 0f)
                             }
 
                             // Add the model to the scene

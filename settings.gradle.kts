@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AdamTCGARFINAL"
+rootProject.name = "TGCARDistributedMLTracker"
 include(":app")

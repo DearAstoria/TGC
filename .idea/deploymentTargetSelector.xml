@@ -2,7 +2,7 @@
 <project version="4">
   <component name="deploymentTargetSelector">
     <selectionStates>
-      <SelectionState runConfigName="TGC_AR_Distributed_ML_Tracker.app">
+      <SelectionState runConfigName="Adam_TCG_AR_FINAL.app">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>
