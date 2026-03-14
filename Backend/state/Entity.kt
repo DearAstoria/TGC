@@ -3,4 +3,5 @@ data class Entity(
     val owner: PlayerId,
     val hp: Int,
     val attack: Int
+    val statuses: MutableList<Status>
 )
