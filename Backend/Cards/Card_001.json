@@ -1,0 +1,20 @@
+{
+    "id": "001",
+    "name": "Goblin Healer",
+    "type": "Creature",
+    "cost": "2",
+    "health": "2",
+    "attack": "1",
+    "abilities": [
+        {
+            "name": "lifeSteal",
+            "trigger": "onHit",
+            "effects": [
+                {
+                    "target": "owner",
+                    "amount": { "var": "damageDealt"}
+                }
+            ]
+        }
+    ]
+}

@@ -35,3 +35,7 @@ env/
 .DS_Store
 Thumbs.db
 *.swp
+
+# --Additional ignores so everyone doesn't need to download all the photos
+/ml_pipeline/dataset/
+/ml_pipeline/generated_dataset/
