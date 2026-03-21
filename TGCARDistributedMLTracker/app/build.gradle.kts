@@ -35,6 +35,13 @@ android {
     buildFeatures {
         compose = true
     }
+    packaging {
+        resources {
+            // If the merger is fighting over files inside the META-INF or manifests
+            pickFirsts.add("**/AndroidManifest.xml")
+            excludes.add("META-INF/DEPENDENCIES")
+        }
+    }
 }
 
 dependencies {
@@ -55,15 +62,31 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    // In order to use the model
-    implementation("org.tensorflow:tensorflow-lite:2.17.0")
-    implementation("org.tensorflow:tensorflow-lite-gpu:2.17.0")
-    implementation("org.tensorflow:tensorflow-lite-support:0.5.0")
-
+// Standardize on LiteRT (The new TFLite)
+    implementation("com.google.ai.edge.litert:litert:2.1.3")
+    implementation("com.google.ai.edge.litert:litert-support-api:1.4.2"){
+        exclude(group = "com.google.ai.edge.litert", module = "litert-api")
+    }
     // Used for ML & AR (ARCore)
     implementation(libs.google.ar.core)
     // SceneView 3D & AR Rendering
-    implementation(libs.sceneview.ar)
+    implementation(libs.sceneview.ar){
+        exclude(group = "com.google.ai.edge.litert", module = "litert-support-api")
+        exclude(group = "org.tensorflow", module = "tensorflow-lite-support")
+    }
     // In order to send moves to the server
     implementation("io.socket:socket.io-client:2.1.0")
+}
+
+configurations.all {
+    resolutionStrategy {
+        // This forces Gradle to pick ONE version and ignore the duplicate API package
+        force("com.google.ai.edge.litert:litert-support:1.4.2")
+
+        // This explicitly tells Gradle: "If you see the old TFLite, replace it with LiteRT"
+        dependencySubstitution {
+            substitute(module("org.tensorflow:tensorflow-lite-support"))
+                .using(module("com.google.ai.edge.litert:litert-support:1.4.2"))
+        }
+    }
 }
