@@ -62,21 +62,11 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    // In order to use the model
-//    implementation("org.tensorflow:tensorflow-lite:2.17.0")
-//    implementation("org.tensorflow:tensorflow-lite-gpu:2.17.0")
-//    implementation("org.tensorflow:tensorflow-lite-support:0.5.0")
 // Standardize on LiteRT (The new TFLite)
     implementation("com.google.ai.edge.litert:litert:2.1.3")
     implementation("com.google.ai.edge.litert:litert-support-api:1.4.2"){
         exclude(group = "com.google.ai.edge.litert", module = "litert-api")
     }
-//    implementation(libs.litert.support){
-//        exclude(group = "com.google.ai.edge.litert", module = "com.google.ai.edge.litert:litert-support")
-//        exclude(group = "org.tensorflow", module = "tensorflow-lite-support")
-//    }
-//    implementation(libs.litert)
-//    implementation(libs.litert.gpu)
     // Used for ML & AR (ARCore)
     implementation(libs.google.ar.core)
     // SceneView 3D & AR Rendering
