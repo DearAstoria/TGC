@@ -25,10 +25,13 @@
             android:theme="@style/Theme.TGCARDistributedMLTracker">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ARActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|uiMode"
+            android:theme="@style/Theme.TGCARDistributedMLTracker" />
     </application>
 
 </manifest>
