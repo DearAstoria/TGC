@@ -5,10 +5,15 @@ import android.graphics.Bitmap
 import android.graphics.RectF
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+//import com.google.ai.edge.litert.Interpreter
+//import com.google.ai.edge.litert.support.common.FileUtil
+// GPU for later maybe
+// import com.google.ai.edge.litert.gpu.GpuDelegate
+//vvTHESE ARE OUTDATED AS GOOGLE IS REBRANDING TENSORFLOWLITE TO LITERT (LITE RUNTIME)
+//VVTHEY ARE DOING THIS TO BETTER REFLECT ITS ROLE AS HIGH-PERFORMANCE RUNTIME FOR EDGE AI.
 // Core TFLite Interpreter imports
 import org.tensorflow.lite.Interpreter
 //import org.tensorflow.lite.GpuDelegate This will take a few steps
-
 // Support Library import for loading the model file
 import org.tensorflow.lite.support.common.FileUtil
 
