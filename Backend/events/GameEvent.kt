@@ -14,11 +14,12 @@ sealed class GameEvent {
     data class Poison(
         val source: EntityId,
         val target: EntityId,
-        val amount: Duration
+        val duration: Int
     ) : GameEvent()
 
     data class Intimidate(
         val source: EntityId,
-        val target: EntityId
+        val target: EntityId,
+        val damageReduction: Int
     )
 }

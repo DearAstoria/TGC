@@ -1,5 +1,5 @@
 fun validateAttack(
-    state: GameState,
+    state: GameStmate,
     player: PlayerId,
     action: ClientAction.Attack
 ): RejectReason? {
