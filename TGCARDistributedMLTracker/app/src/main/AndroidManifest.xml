@@ -8,6 +8,7 @@
         tools:node="replace" />
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-feature android:name="android.hardware.camera.ar" android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -32,6 +33,7 @@
             android:name=".ARActivity"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|uiMode"
             android:theme="@style/Theme.TGCARDistributedMLTracker" />
+        <meta-data android:name="com.google.ar.core.render_backend" android:value="opengl_es" />
     </application>
 
 </manifest>

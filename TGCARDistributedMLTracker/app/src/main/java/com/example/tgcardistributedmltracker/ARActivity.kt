@@ -2,6 +2,7 @@ package com.example.tgcardistributedmltracker
 
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
@@ -39,11 +40,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
+import com.google.ar.core.TrackingState
+import com.google.ar.core.exceptions.NotYetAvailableException
 import io.github.sceneview.rememberEngine
 
 
 class ARActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        System.setProperty("io.github.sceneview.render_backend", "opengl")
         super.onCreate(savedInstanceState)
         setContent {
             TGCARDistributedMLTrackerTheme {
@@ -66,13 +70,18 @@ class ARActivity : ComponentActivity() {
                         // Configure AR session settings
                         sessionConfiguration = { session, config ->
                             // Enable depth if supported on the device
-                            config.depthMode =
-                                when (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
-                                    true -> Config.DepthMode.AUTOMATIC
-                                    else -> Config.DepthMode.DISABLED
-                                }
+//                            config.depthMode =
+//                                when (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
+//                                    true -> Config.DepthMode.AUTOMATIC
+//                                    else -> Config.DepthMode.DISABLED
+//                                }
                             config.instantPlacementMode = Config.InstantPlacementMode.LOCAL_Y_UP
-                            config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
+//                            config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
+                            // Temporarily disabling these while debugging
+                            session.configure(session.config.apply {
+                                depthMode = Config.DepthMode.DISABLED
+                                lightEstimationMode = Config.LightEstimationMode.DISABLED
+                            })
                         },
 
                         // Enable plane detection visualization
@@ -93,64 +102,84 @@ class ARActivity : ComponentActivity() {
                         },
                         modifier = Modifier.fillMaxSize(),
                         // Frame update callback
+
                         onSessionUpdated = { session, frame ->
-                            val currentTime = System.currentTimeMillis()
+                            if (frame.camera.trackingState == TrackingState.TRACKING) {
+                                try {
+                                    val currentTime = System.currentTimeMillis()
 
-                            // Only run inference every 100ms (10 FPS) to save battery
-                            if (currentTime - lastInferenceTime > 100) {
-                                lastInferenceTime = currentTime
+                                    // Only run inference every 100ms (10 FPS) to save battery
+                                    if (currentTime - lastInferenceTime > 100) {
+                                        lastInferenceTime = currentTime
 
-                                // Acquire the camera image/frame
-                                val cameraImage = frame.acquireCameraImage()
+                                        // Acquire the camera image/frame
+                                        frame.acquireCameraImage()?.use { cameraImage ->
+                                            try {
+                                                // Only process if the image exists
+                                                cameraImage?.let {
+                                                    converter.yuvToRgb(it, bitmap)
 
-                                // Only process if the image exists
-                                cameraImage?.let {
-                                    converter.yuvToRgb(it, bitmap)
-
-                                    // Feed the bitmap
-                                    val detections = cardDetector.detectCard(bitmap)
-                                    // Updating currentDetections,
-                                    currentDetections = detections
-                                    // Handling Detections code:
-                                    // vv might update the UI here and/or
-                                    // vv creating Anchor 3D models                               vv
-                                    for (detection in detections) {
-                                        // 1. Getting the center of the card's bounding box
-                                        val centerX = detection.boundingBox.centerX()
-                                        val centerY = detection.boundingBox.centerY()
-
-                                        // 2. Performing a Hit-Test to see where that point hits the
-                                        // physical floor/table
-                                        val hitResults = frame.hitTest(centerX, centerY)
-                                        val hit = hitResults.firstOrNull { it.trackable is Plane }
-
-                                        if (hit != null) {
-                                            // 3. Creating an Anchor at that physical location
-                                            val anchor = hit.createAnchor()
-                                            val anchorNode = AnchorNode(engine, anchor)
-
-                                            // vv Not done yet, might not use, might have wrong syntax vv
-//                                        // 4. Attach the 3D model
-//                                        val modelNode = ModelNode(engine).apply {
-//                                            loadModelGlbAsync(
-//                                                glbFileLocation = "models/${detection.className.lowercase()}.glb",
-//                                                scaleToUnits = 0.1f
-//                                            )
-//                                        }
+//                                                    // Feed the bitmap
+//                                                    val detections = cardDetector.detectCard(bitmap)
+//                                                    // Updating currentDetections,
+//                                                    currentDetections = detections
+//                                                    // Handling Detections code:
+//                                                    // vv might update the UI here and/or
+//                                                    // vv creating Anchor 3D models                               vv
+//                                                    for (detection in detections) {
+//                                                        // 1. Getting the center of the card's bounding box
+//                                                        val centerX = detection.boundingBox.centerX()
+//                                                        val centerY = detection.boundingBox.centerY()
 //
-//                                        anchorNode.addChild(modelNode)
-//                                        arSceneView.addChild(anchorNode)
-                                            // YY                                                     YY
-                                        }
-                                    } // End of detections-loop
+//                                                        // 2. Performing a Hit-Test to see where that point hits the
+//                                                        // physical floor/table
+//                                                        val hitResults = frame.hitTest(centerX, centerY)
+//                                                        val hit = hitResults.firstOrNull { it.trackable is Plane }
+//
+//                                                        if (hit != null) {
+//                                                            // 3. Creating an Anchor at that physical location
+//                                                            val anchor = hit.createAnchor()
+//                                                            val anchorNode = AnchorNode(engine, anchor)
+//
+//                                                            // vv Not done yet, might not use, might have wrong syntax vv
+//                                                            //                                        // 4. Attach the 3D model
+//                                                            //                                        val modelNode = ModelNode(engine).apply {
+//                                                            //                                            loadModelGlbAsync(
+//                                                            //                                                glbFileLocation = "models/${detection.className.lowercase()}.glb",
+//                                                            //                                                scaleToUnits = 0.1f
+//                                                            //                                            )
+//                                                            //                                        }
+//                                                            //
+//                                                            //                                        anchorNode.addChild(modelNode)
+//                                                            //                                        arSceneView.addChild(anchorNode)
+//                                                            // YY                                                     YY
+//                                                        }
+//                                                    } // End of detections-loop
 
-                                    it.close() // Cleans up memory/Closes the frame
-                                    // Note: Do not process frame after closing, image
-                                    // object is borrowed memory and will fail if trying
-                                    // to process after closing. This is why it's at the
-                                    // end. -__o.o__-
+                                                    it.close() // Cleans up memory/Closes the frame
+                                                    // Note: Do not process frame after closing, image
+                                                    // object is borrowed memory and will fail if trying
+                                                    // to process after closing. This is why it's at the
+                                                    // end. -__o.o__-
+                                                }
+                                            } catch (e: Exception) {
+                                                Log.e("ARCORE", "Processing error: ${e.message}")
+                                            }
+                                        } // Image will be properly closed due to Kotlin's nifty ".use"
+                                          // function. The ".use" function makes sure that any type that
+                                          // implements the Java "Closeable" interface I.E. input/output streams,
+                                          // readers, writers are properly closed. It is Kotlin's automatic
+                                          // resource management. This also makes the classic "finally" block
+                                          // unnecessary.
+                                    }
+                                } catch (e: NotYetAvailableException) {
+                                    // This is normal during the first 1-2 seconds of startup
+                                    Log.d("ARCORE", "Frame not yet available")
+                                } catch (e: Exception) {
+                                    Log.e("ARCORE", "Detection error: ${e.message}")
                                 }
                             }
+
                         },
 
                         // Error handling
