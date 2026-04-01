@@ -40,9 +40,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
+import com.google.ar.core.CameraConfig
+import com.google.ar.core.CameraConfigFilter
 import com.google.ar.core.TrackingState
 import com.google.ar.core.exceptions.NotYetAvailableException
 import io.github.sceneview.rememberEngine
+import java.util.EnumSet
 
 
 class ARActivity : ComponentActivity() {
@@ -55,11 +58,14 @@ class ARActivity : ComponentActivity() {
                 var arSceneView: ARSceneView? = null
                 val context = LocalContext.current
                 val materialLoader = remember { io.github.sceneview.loaders.MaterialLoader(engine,context) }
+                val cameraStream = rememberARCameraStream(materialLoader) // Starting the camera stream
+                // before the ARScene ensure it's ready for use when the ARScene is set up.
                 val cardDetector = remember { CardDetector(context) }
                 var lastInferenceTime: Long = 0
                 val bitmap = remember { Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888) }
                 val converter = remember { YuvToRgbConverter(context) }
                 var currentDetections by remember { mutableStateOf<List<DetectionResult>>(emptyList()) }
+                var isProcessing by remember { mutableStateOf(false) }
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     ARScene(
@@ -70,25 +76,40 @@ class ARActivity : ComponentActivity() {
                         // Configure AR session settings
                         sessionConfiguration = { session, config ->
                             // Enable depth if supported on the device
-//                            config.depthMode =
+                            config.depthMode = Config.DepthMode.DISABLED
 //                                when (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
-//                                    true -> Config.DepthMode.AUTOMATIC
+//                                    true -> Config.DepthMode.DISABLED
 //                                    else -> Config.DepthMode.DISABLED
 //                                }
-                            config.instantPlacementMode = Config.InstantPlacementMode.LOCAL_Y_UP
+//                            config.instantPlacementMode = Config.InstantPlacementMode.LOCAL_Y_UP
+                            // I believe this one vv uses the depth mode or it just makes it simpler
+                            // to disable it at first so yeah!
+                            config.instantPlacementMode = Config.InstantPlacementMode.DISABLED
+//                            // FIXED helps initial link
+//                            config.focusMode = Config.FocusMode.FIXED
+                            // Sometimes the 'Auto' light estimation causes the 'Processing error: null'
+                            config.lightEstimationMode = Config.LightEstimationMode.DISABLED
 //                            config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
                             // Temporarily disabling these while debugging
-                            session.configure(session.config.apply {
-                                depthMode = Config.DepthMode.DISABLED
-                                lightEstimationMode = Config.LightEstimationMode.DISABLED
-                            })
+//                            session.configure(session.config.apply {
+//                                depthMode = Config.DepthMode.DISABLED
+//                                lightEstimationMode = Config.LightEstimationMode.DISABLED
+//                            })
+                            // FPS improvement in order to have sync process work properly.
+                            val filter = CameraConfigFilter(session).apply {
+                                setTargetFps(EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_30))
+                            }
+                            val configs = session.getSupportedCameraConfigs(filter)
+                            if (configs.isNotEmpty()) {
+                                session.cameraConfig = configs[0]
+                            }
                         },
 
                         // Enable plane detection visualization
                         planeRenderer = true,
 
                         // Configure camera stream
-                        cameraStream = rememberARCameraStream(materialLoader),
+                        cameraStream = cameraStream,
 
                         // Session lifecycle callbacks
                         onSessionCreated = { session ->
@@ -101,19 +122,19 @@ class ARActivity : ComponentActivity() {
                             // Handle session pause
                         },
                         modifier = Modifier.fillMaxSize(),
-                        // Frame update callback
 
+                        // Frame update callback
                         onSessionUpdated = { session, frame ->
-                            if (frame.camera.trackingState == TrackingState.TRACKING) {
-                                try {
+                            if (frame.camera.trackingState == TrackingState.TRACKING && !isProcessing) {                                try {
                                     val currentTime = System.currentTimeMillis()
 
-                                    // Only run inference every 100ms (10 FPS) to save battery
-                                    if (currentTime - lastInferenceTime > 100) {
+                                    // Only run inference every 150ms (15 FPS) to save battery and stability purposes.
+                                    if (currentTime - lastInferenceTime > 150) {
                                         lastInferenceTime = currentTime
 
                                         // Acquire the camera image/frame
                                         frame.acquireCameraImage()?.use { cameraImage ->
+                                            isProcessing = true
                                             try {
                                                 // Only process if the image exists
                                                 cameraImage?.let {
@@ -155,8 +176,8 @@ class ARActivity : ComponentActivity() {
 //                                                            // YY                                                     YY
 //                                                        }
 //                                                    } // End of detections-loop
-
-                                                    it.close() // Cleans up memory/Closes the frame
+                                                      // Didn't need this anymore since I started .use
+//                                                    it.close() // Cleans up memory/Closes the frame
                                                     // Note: Do not process frame after closing, image
                                                     // object is borrowed memory and will fail if trying
                                                     // to process after closing. This is why it's at the
@@ -177,6 +198,11 @@ class ARActivity : ComponentActivity() {
                                     Log.d("ARCORE", "Frame not yet available")
                                 } catch (e: Exception) {
                                     Log.e("ARCORE", "Detection error: ${e.message}")
+                                } finally {
+                                    isProcessing = false // Using the finally block for state-management
+                                                         // the use. statement still closes the image.
+                                                         // I might re-arrange the code so it looks cleaner later
+                                                         // and this difference in uses are more explicit.
                                 }
                             }
 
