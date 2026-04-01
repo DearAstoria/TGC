@@ -33,6 +33,7 @@ import com.google.ar.core.Plane
 import io.github.sceneview.ar.rememberARCameraStream
 import io.github.sceneview.loaders.MaterialLoader
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -66,6 +67,7 @@ class ARActivity : ComponentActivity() {
                 val converter = remember { YuvToRgbConverter(context) }
                 var currentDetections by remember { mutableStateOf<List<DetectionResult>>(emptyList()) }
                 var isProcessing by remember { mutableStateOf(false) }
+                val scope = rememberCoroutineScope()
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     ARScene(
@@ -88,8 +90,8 @@ class ARActivity : ComponentActivity() {
 //                            // FIXED helps initial link
 //                            config.focusMode = Config.FocusMode.FIXED
                             // Sometimes the 'Auto' light estimation causes the 'Processing error: null'
-                            config.lightEstimationMode = Config.LightEstimationMode.DISABLED
-//                            config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
+                            config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
+                            config.updateMode = Config.UpdateMode.BLOCKING
                             // Temporarily disabling these while debugging
 //                            session.configure(session.config.apply {
 //                                depthMode = Config.DepthMode.DISABLED
@@ -133,12 +135,12 @@ class ARActivity : ComponentActivity() {
                                         lastInferenceTime = currentTime
 
                                         // Acquire the camera image/frame
-                                        frame.acquireCameraImage()?.use { cameraImage ->
+                                        frame.acquireCameraImage().use { cameraImage ->
                                             isProcessing = true
                                             try {
                                                 // Only process if the image exists
-                                                cameraImage?.let {
-                                                    converter.yuvToRgb(it, bitmap)
+                                                cameraImage.let {
+                                                    converter.yuvToRgb(cameraImage, bitmap)
 
 //                                                    // Feed the bitmap
 //                                                    val detections = cardDetector.detectCard(bitmap)
@@ -220,38 +222,38 @@ class ARActivity : ComponentActivity() {
                     ) // End of ARScene
 
                     // The Debug Overlay
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        currentDetections.forEach { detection ->
-                            // YOLOv8 returns 0-640 coordinates; we need to scale them to the screen size
-                            val scaleX = size.width / 640f
-                            val scaleY = size.height / 640f
-
-                            val left = detection.boundingBox.left * scaleX
-                            val top = detection.boundingBox.top * scaleY
-                            val right = detection.boundingBox.right * scaleX
-                            val bottom = detection.boundingBox.bottom * scaleY
-
-                            // Draw the bounding box
-                            drawRect(
-                                color = Color.Green,
-                                topLeft = Offset(left, top),
-                                size = Size(right - left, bottom - top),
-                                style = Stroke(width = 5f)
-                            )
-
-                            // Draw the Label (I.E., "Bulb_Wiz 99%")
-                            drawContext.canvas.nativeCanvas.drawText(
-                                "${detection.className} ${(detection.confidence * 100).toInt()}%",
-                                left,
-                                top - 10f,
-                                android.graphics.Paint().apply {
-                                    color = android.graphics.Color.GREEN
-                                    textSize = 40f
-                                    isFakeBoldText = true
-                                }
-                            )
-                        } // End of for-each
-                    } // End of Canvas
+//                    Canvas(modifier = Modifier.fillMaxSize()) {
+//                        currentDetections.forEach { detection ->
+//                            // YOLOv8 returns 0-640 coordinates; we need to scale them to the screen size
+//                            val scaleX = size.width / 640f
+//                            val scaleY = size.height / 640f
+//
+//                            val left = detection.boundingBox.left * scaleX
+//                            val top = detection.boundingBox.top * scaleY
+//                            val right = detection.boundingBox.right * scaleX
+//                            val bottom = detection.boundingBox.bottom * scaleY
+//
+//                            // Draw the bounding box
+//                            drawRect(
+//                                color = Color.Green,
+//                                topLeft = Offset(left, top),
+//                                size = Size(right - left, bottom - top),
+//                                style = Stroke(width = 5f)
+//                            )
+//
+//                            // Draw the Label (I.E., "Bulb_Wiz 99%")
+//                            drawContext.canvas.nativeCanvas.drawText(
+//                                "${detection.className} ${(detection.confidence * 100).toInt()}%",
+//                                left,
+//                                top - 10f,
+//                                android.graphics.Paint().apply {
+//                                    color = android.graphics.Color.GREEN
+//                                    textSize = 40f
+//                                    isFakeBoldText = true
+//                                }
+//                            )
+//                        } // End of for-each
+//                    } // End of Canvas
                 }  // End of Box
             }
         }
