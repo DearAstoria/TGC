@@ -12,20 +12,23 @@ android {
     defaultConfig {
         applicationId = "com.example.tgcardistributedmltracker"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a")) // Force 64-bit only to ensure libpenguin loads
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+//            proguardFiles(
+//                getDefaultProguardFile("proguard-android-optimize.txt"),
+//                "proguard-rules.pro"
+//            )
         }
     }
     compileOptions {
@@ -38,8 +41,11 @@ android {
     packaging {
         resources {
             // If the merger is fighting over files inside the META-INF or manifests
-            pickFirsts.add("**/AndroidManifest.xml")
-            excludes.add("META-INF/DEPENDENCIES")
+//            pickFirsts.add("**/AndroidManifest.xml")
+//            excludes.add("META-INF/DEPENDENCIES")
+            jniLibs {
+                useLegacyPackaging = true
+            }
         }
     }
 }
@@ -55,38 +61,41 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.room.external.antlr)
     implementation(libs.identity.doctypes.jvm)
+//    implementation(libs.support.core.utils)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+//    androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 // Standardize on LiteRT (The new TFLite)
-    implementation("com.google.ai.edge.litert:litert:2.1.3")
-    implementation("com.google.ai.edge.litert:litert-support-api:1.4.2"){
+    implementation(libs.litert)
+    implementation(libs.litert.support.api)
+    {
         exclude(group = "com.google.ai.edge.litert", module = "litert-api")
     }
     // Used for ML & AR (ARCore)
     implementation(libs.google.ar.core)
     // SceneView 3D & AR Rendering
-    implementation(libs.sceneview.ar){
-        exclude(group = "com.google.ai.edge.litert", module = "litert-support-api")
-        exclude(group = "org.tensorflow", module = "tensorflow-lite-support")
-    }
+    implementation(libs.sceneview.ar)
+//    {
+//        exclude(group = "com.google.ai.edge.litert", module = "litert-support-api")
+//        exclude(group = "org.tensorflow", module = "tensorflow-lite-support")
+//    }
     // In order to send moves to the server
-    implementation("io.socket:socket.io-client:2.1.0")
+    implementation(libs.socket.io.client)
 }
-
-configurations.all {
-    resolutionStrategy {
-        // This forces Gradle to pick ONE version and ignore the duplicate API package
-        force("com.google.ai.edge.litert:litert-support:1.4.2")
-
-        // This explicitly tells Gradle: "If you see the old TFLite, replace it with LiteRT"
-        dependencySubstitution {
-            substitute(module("org.tensorflow:tensorflow-lite-support"))
-                .using(module("com.google.ai.edge.litert:litert-support:1.4.2"))
-        }
-    }
-}
+//
+//configurations.all {
+//    resolutionStrategy {
+//        // This forces Gradle to pick ONE version and ignore the duplicate API package
+//        force("com.google.ai.edge.litert:litert-support:1.4.2")
+//
+//        // This explicitly tells Gradle: "If you see the old TFLite, replace it with LiteRT"
+//        dependencySubstitution {
+//            substitute(module("org.tensorflow:tensorflow-lite-support"))
+//                .using(module("com.google.ai.edge.litert:litert-support:1.4.2"))
+//        }
+//    }
+//}
