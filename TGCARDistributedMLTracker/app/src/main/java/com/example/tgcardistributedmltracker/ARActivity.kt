@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.tgcardistributedmltracker.ui.theme.TGCARDistributedMLTrackerTheme
 import io.github.sceneview.ar.ARScene
-import io.github.sceneview.ar.ARSceneView
+//import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.model.ModelInstance
 //  import io.github.sceneview.ar.node.ArModelNode DEPRECATED
 //  import io.github.sceneview.ar.node.PlacementMode DEPRECATED
@@ -41,224 +41,280 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
+import com.google.ar.core.Anchor
 import com.google.ar.core.CameraConfig
 import com.google.ar.core.CameraConfigFilter
 import com.google.ar.core.TrackingState
 import com.google.ar.core.exceptions.NotYetAvailableException
+//import io.github.sceneview.SceneView
+import io.github.sceneview.ar.arcore.createAnchorOrNull
+import io.github.sceneview.ar.arcore.getUpdatedPlanes
 import io.github.sceneview.rememberEngine
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.EnumSet
 
 
 class ARActivity : ComponentActivity() {
+    private lateinit var converter: YuvToRgbConverter
     override fun onCreate(savedInstanceState: Bundle?) {
         System.setProperty("io.github.sceneview.render_backend", "opengl")
+        System.setProperty("filament.backend", "opengl")
         super.onCreate(savedInstanceState)
         setContent {
             TGCARDistributedMLTrackerTheme {
-                var engine = rememberEngine()
-                var arSceneView: ARSceneView? = null
-                val context = LocalContext.current
-                val materialLoader = remember { io.github.sceneview.loaders.MaterialLoader(engine,context) }
-                val cameraStream = rememberARCameraStream(materialLoader) // Starting the camera stream
+                var anchor by remember { mutableStateOf<Anchor?>(null) }
+                var isProcessing by remember { mutableStateOf(false) }
                 // before the ARScene ensure it's ready for use when the ARScene is set up.
-                val cardDetector = remember { CardDetector(context) }
                 var lastInferenceTime: Long = 0
                 val bitmap = remember { Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888) }
-                val converter = remember { YuvToRgbConverter(context) }
-                var currentDetections by remember { mutableStateOf<List<DetectionResult>>(emptyList()) }
-                var isProcessing by remember { mutableStateOf(false) }
+                val context = LocalContext.current
+                converter = remember { YuvToRgbConverter(context) }
                 val scope = rememberCoroutineScope()
-
-                Box(modifier = Modifier.fillMaxSize()) {
-                    ARScene(
-                        // Configure AR session features
-                        sessionFeatures = setOf(),
-                        sessionCameraConfig = null,
-
-                        // Configure AR session settings
-                        sessionConfiguration = { session, config ->
-                            // Enable depth if supported on the device
-                            config.depthMode = Config.DepthMode.DISABLED
-//                                when (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
-//                                    true -> Config.DepthMode.DISABLED
-//                                    else -> Config.DepthMode.DISABLED
-//                                }
-//                            config.instantPlacementMode = Config.InstantPlacementMode.LOCAL_Y_UP
-                            // I believe this one vv uses the depth mode or it just makes it simpler
-                            // to disable it at first so yeah!
-                            config.instantPlacementMode = Config.InstantPlacementMode.DISABLED
-//                            // FIXED helps initial link
-//                            config.focusMode = Config.FocusMode.FIXED
-                            // Sometimes the 'Auto' light estimation causes the 'Processing error: null'
-                            config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
-                            config.updateMode = Config.UpdateMode.BLOCKING
-                            // Temporarily disabling these while debugging
-//                            session.configure(session.config.apply {
-//                                depthMode = Config.DepthMode.DISABLED
-//                                lightEstimationMode = Config.LightEstimationMode.DISABLED
-//                            })
-                            // FPS improvement in order to have sync process work properly.
-                            val filter = CameraConfigFilter(session).apply {
-                                setTargetFps(EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_30))
-                            }
-                            val configs = session.getSupportedCameraConfigs(filter)
-                            if (configs.isNotEmpty()) {
-                                session.cameraConfig = configs[0]
-                            }
-                        },
-
-                        // Enable plane detection visualization
-                        planeRenderer = true,
-
-                        // Configure camera stream
-                        cameraStream = cameraStream,
-
-                        // Session lifecycle callbacks
-                        onSessionCreated = { session ->
-                            // Handle session creation
-                        },
-                        onSessionResumed = { session ->
-                            // Handle session resume
-                        },
-                        onSessionPaused = { session ->
-                            // Handle session pause
-                        },
-                        modifier = Modifier.fillMaxSize(),
-
-                        // Frame update callback
-                        onSessionUpdated = { session, frame ->
-                            if (frame.camera.trackingState == TrackingState.TRACKING && !isProcessing) {                                try {
-                                    val currentTime = System.currentTimeMillis()
-
-                                    // Only run inference every 150ms (15 FPS) to save battery and stability purposes.
-                                    if (currentTime - lastInferenceTime > 150) {
-                                        lastInferenceTime = currentTime
-
-                                        // Acquire the camera image/frame
-                                        frame.acquireCameraImage().use { cameraImage ->
-                                            isProcessing = true
-                                            try {
-                                                // Only process if the image exists
-                                                cameraImage.let {
-                                                    converter.yuvToRgb(cameraImage, bitmap)
-
-//                                                    // Feed the bitmap
-//                                                    val detections = cardDetector.detectCard(bitmap)
-//                                                    // Updating currentDetections,
-//                                                    currentDetections = detections
-//                                                    // Handling Detections code:
-//                                                    // vv might update the UI here and/or
-//                                                    // vv creating Anchor 3D models                               vv
-//                                                    for (detection in detections) {
-//                                                        // 1. Getting the center of the card's bounding box
-//                                                        val centerX = detection.boundingBox.centerX()
-//                                                        val centerY = detection.boundingBox.centerY()
-//
-//                                                        // 2. Performing a Hit-Test to see where that point hits the
-//                                                        // physical floor/table
-//                                                        val hitResults = frame.hitTest(centerX, centerY)
-//                                                        val hit = hitResults.firstOrNull { it.trackable is Plane }
-//
-//                                                        if (hit != null) {
-//                                                            // 3. Creating an Anchor at that physical location
-//                                                            val anchor = hit.createAnchor()
-//                                                            val anchorNode = AnchorNode(engine, anchor)
-//
-//                                                            // vv Not done yet, might not use, might have wrong syntax vv
-//                                                            //                                        // 4. Attach the 3D model
-//                                                            //                                        val modelNode = ModelNode(engine).apply {
-//                                                            //                                            loadModelGlbAsync(
-//                                                            //                                                glbFileLocation = "models/${detection.className.lowercase()}.glb",
-//                                                            //                                                scaleToUnits = 0.1f
-//                                                            //                                            )
-//                                                            //                                        }
-//                                                            //
-//                                                            //                                        anchorNode.addChild(modelNode)
-//                                                            //                                        arSceneView.addChild(anchorNode)
-//                                                            // YY                                                     YY
-//                                                        }
-//                                                    } // End of detections-loop
-                                                      // Didn't need this anymore since I started .use
-//                                                    it.close() // Cleans up memory/Closes the frame
-                                                    // Note: Do not process frame after closing, image
-                                                    // object is borrowed memory and will fail if trying
-                                                    // to process after closing. This is why it's at the
-                                                    // end. -__o.o__-
-                                                }
-                                            } catch (e: Exception) {
-                                                Log.e("ARCORE", "Processing error: ${e.message}")
-                                            }
-                                        } // Image will be properly closed due to Kotlin's nifty ".use"
-                                          // function. The ".use" function makes sure that any type that
-                                          // implements the Java "Closeable" interface I.E. input/output streams,
-                                          // readers, writers are properly closed. It is Kotlin's automatic
-                                          // resource management. This also makes the classic "finally" block
-                                          // unnecessary.
-                                    }
-                                } catch (e: NotYetAvailableException) {
-                                    // This is normal during the first 1-2 seconds of startup
-                                    Log.d("ARCORE", "Frame not yet available")
-                                } catch (e: Exception) {
-                                    Log.e("ARCORE", "Detection error: ${e.message}")
-                                } finally {
-                                    isProcessing = false // Using the finally block for state-management
-                                                         // the use. statement still closes the image.
-                                                         // I might re-arrange the code so it looks cleaner later
-                                                         // and this difference in uses are more explicit.
-                                }
-                            }
-
-                        },
-
-                        // Error handling
-                        onSessionFailed = { exception ->
-                            // Handle ARCore session errors
-                        },
-
-                        // Track camera tracking state changes
-                        onTrackingFailureChanged = { trackingFailureReason ->
-                            // Handle tracking failures
+                val cardDetector = remember { CardDetector(context) }
+                var currentDetections by remember { mutableStateOf<List<DetectionResult>>(emptyList()) }
+                Box() {
+                ARScene(
+                    modifier = Modifier.fillMaxSize(),
+                    planeRenderer = true,
+                    onSessionUpdated = { _, frame ->
+                        if (anchor == null) {
+                            anchor = frame.getUpdatedPlanes()
+                                .firstOrNull { it.type == Plane.Type.HORIZONTAL_UPWARD_FACING }
+                                ?.let { it.createAnchorOrNull(it.centerPose) }
                         }
-                    ) // End of ARScene
+                        if (frame.camera.trackingState == TrackingState.TRACKING && !isProcessing) {
+                                    try {
+                                        val currentTime = System.currentTimeMillis()
+
+                                        // Only run inference every 150ms (15 FPS) to save battery and stability purposes.
+                                        if (currentTime - lastInferenceTime > 150) {
+                                            lastInferenceTime = currentTime
+                                            // Acquire the camera image/frame
+                                            val cameraImage = try { frame.acquireCameraImage() } catch (e: Exception) { null }
+                                            cameraImage?.let { image ->
+                                                isProcessing = true
+                                                // Launching this on a background thread in order to keep the UI running smoothly.
+                                                scope.launch(Dispatchers.Default) {
+                                                    try {
+                                                        cameraImage.let {
+                                                            Log.i("Hi", "BEFORE converter\n")
+                                                            if (cameraImage.planes.size >= 3) {
+                                                                Log.d("ARCORE", "Camera Image: ${cameraImage.width}x${cameraImage.height} | Bitmap: ${bitmap.width}x${bitmap.height}")
+                                                                converter.yuvToRgb(
+                                                                    cameraImage,
+                                                                    bitmap
+                                                                )
+                                                            } else {
+                                                                Log.e(
+                                                                    "ARCORE",
+                                                                    "Image planes invalid: ${cameraImage.planes.size}"
+                                                                )
+                                                            }
+                                                            Log.i("Hi", "After converter\n")
+                                                            // Feed the bitmap
+                                                            val detections = cardDetector.detectCard(bitmap)
+        //                                                    // Updating currentDetections,
+                                                            currentDetections = detections
+        //                                                    // Handling Detections code:
+        //                                                    // vv might update the UI here and/or
+        //                                                    // vv creating Anchor 3D models                               vv
+                                                            if (!detections.isEmpty()) {
+                                                                Log.i("DETECTIONS: detections not empty", "$detections\n")
+                                                                for (detection in detections) {
+                                                                // 1. Getting the center of the card's bounding box
+                                                                val centerX = detection.boundingBox.centerX()
+                                                                val centerY = detection.boundingBox.centerY()
+        //
+        //                                                        // 2. Performing a Hit-Test to see where that point hits the
+        //                                                        // physical floor/table
+                                                                val hitResults = frame.hitTest(centerX, centerY)
+//                                                                val hit = hitResults.firstOrNull { it.trackable is Plane }
+        //
+        //                                                        if (hit != null) {
+        //                                                            // 3. Creating an Anchor at that physical location
+        //                                                            val anchor = hit.createAnchor()
+        //                                                            val anchorNode = AnchorNode(engine, anchor)
+        //
+        //                                                            // vv Not done yet, might not use, might have wrong syntax vv
+        //                                                            //                                        // 4. Attach the 3D model
+        //                                                            //                                        val modelNode = ModelNode(engine).apply {
+        //                                                            //                                            loadModelGlbAsync(
+        //                                                            //                                                glbFileLocation = "models/${detection.className.lowercase()}.glb",
+        //                                                            //                                                scaleToUnits = 0.1f
+        //                                                            //                                            )
+        //                                                            //                                        }
+        //                                                            //
+        //                                                            //                                        anchorNode.addChild(modelNode)
+        //                                                            //                                        arSceneView.addChild(anchorNode)
+        //                                                            // YY                                                     YY
+        //                                                        }
+                                                            } // End of detections-loop
+                                                            } // End of if (!detections.isEmpty())
+                                                                    // Didn't need this anymore since I started .use
+        //                                                    it.close() // Cleans up memory/Closes the frame
+                                                                    // Note: Do not process frame after closing, image
+                                                                    // object is borrowed memory and will fail if trying
+                                                                    // to process after closing. This is why it's at the
+                                                                    // end. -__o.o__-
+                                                                } // End of cameraImage.let
+                                                    } catch (e: Exception) {
+                                                        Log.e(
+                                                            "ARCORE",
+                                                            "Processing error: ${e}"
+                                                        )
+                                                    } finally {
+                                                        cameraImage.close()
+                                                        isProcessing =
+                                                            false // Using the finally block for state-management
+                                                        // the use. statement still closes the image.
+                                                        // I might re-arrange the code so it looks cleaner later
+                                                        // and this difference in uses are more explicit.
+                                                    }
+                                                } // End of launch
+                                            } // End of let
+                                        } // End of if(inferenceTime-..)
+                                    } catch (e: NotYetAvailableException) {
+                                        // This is normal during the first 1-2 seconds of startup
+                                        Log.d("ARCORE", "Frame not yet available")
+                                    } catch (e: Exception) {
+                                        Log.e("ARCORE", "Detection error: ${e.message}")
+                                    } finally {
+                                    }
+                                } // End of if (frame.camera.tracking..)
+                    }
+                ) // {
+//                    anchor?.let {
+//                        AnchorNode(anchor = it) {
+//                            ModelNode(modelInstance = helmet, scaleToUnits = 0.5f)
+//                        }
+//                    }
+//                }
+
+                // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+//                var engine = rememberEngine()
+//                var arSceneView: ARSceneView? = null
+//                val materialLoader = remember { io.github.sceneview.loaders.MaterialLoader(engine,context) }
+//                val cameraStream = rememberARCameraStream(materialLoader) // Starting the camera stream
+//
+//                Box(modifier = Modifier.fillMaxSize()) {
+//                    ARScene(
+//                        // Configure AR session features
+//                        sessionFeatures = setOf(),
+//                        sessionCameraConfig = null,
+//
+//                        // Configure AR session settings
+//                        sessionConfiguration = { session, config ->
+//                            // Enable depth if supported on the device
+//                            config.depthMode = Config.DepthMode.AUTOMATIC
+////                                when (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
+////                                    true -> Config.DepthMode.DISABLED
+////                                    else -> Config.DepthMode.DISABLED
+////                                }
+////                            config.instantPlacementMode = Config.InstantPlacementMode.LOCAL_Y_UP
+//                            // I believe this one vv uses the depth mode or it just makes it simpler
+//                            // to disable it at first so yeah!
+//                            config.instantPlacementMode = Config.InstantPlacementMode.LOCAL_Y_UP
+////                            // FIXED helps initial link
+////                            config.focusMode = Config.FocusMode.FIXED
+//                            // Sometimes the 'Auto' light estimation causes the 'Processing error: null'
+//                            config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
+//                            config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE                            // Temporarily disabling these while debugging
+////                            session.configure(session.config.apply {
+////                                depthMode = Config.DepthMode.DISABLED
+////                                lightEstimationMode = Config.LightEstimationMode.DISABLED
+////                            })
+//                            // FPS improvement in order to have sync process work properly.
+//                            val filter = CameraConfigFilter(session).apply {
+//                                setTargetFps(EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_30))
+//                            }
+//                            val configs = session.getSupportedCameraConfigs(filter)
+//                            if (configs.isNotEmpty()) {
+//                                session.cameraConfig = configs[0]
+//                            }
+//                        },
+//
+//                        // Enable plane detection visualization
+//                        planeRenderer = true,
+//
+//                        // Configure camera stream
+//                        cameraStream = cameraStream,
+//
+//                        // Session lifecycle callbacks
+//                        onSessionCreated = { session ->
+//                            // Handle session creation
+//                        },
+//                        onSessionResumed = { session ->
+//                            // Handle session resume
+//                        },
+//                        onSessionPaused = { session ->
+//                            // Handle session pause
+//                        },
+//                        modifier = Modifier.fillMaxSize(),
+//
+//                        // Frame update callback
+//                        onSessionUpdated = { session, frame ->
+//                            scope.launch {
+//
+//                            } // End of launch
+//                        },
+//
+//                        // Error handling
+//                        onSessionFailed = { exception ->
+//                            // Handle ARCore session errors
+//                        },
+//
+//                        // Track camera tracking state changes
+//                        onTrackingFailureChanged = { trackingFailureReason ->
+//                            // Handle tracking failures
+//                        }
+//                    ) // End of ARScene
 
                     // The Debug Overlay
-//                    Canvas(modifier = Modifier.fillMaxSize()) {
-//                        currentDetections.forEach { detection ->
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        currentDetections.forEach { detection ->
 //                            // YOLOv8 returns 0-640 coordinates; we need to scale them to the screen size
-//                            val scaleX = size.width / 640f
-//                            val scaleY = size.height / 640f
-//
-//                            val left = detection.boundingBox.left * scaleX
-//                            val top = detection.boundingBox.top * scaleY
-//                            val right = detection.boundingBox.right * scaleX
-//                            val bottom = detection.boundingBox.bottom * scaleY
-//
-//                            // Draw the bounding box
-//                            drawRect(
-//                                color = Color.Green,
-//                                topLeft = Offset(left, top),
-//                                size = Size(right - left, bottom - top),
-//                                style = Stroke(width = 5f)
-//                            )
+                            val scaleX = size.width / 640f
+                            val scaleY = size.height / 640f
+
+                            val left = detection.boundingBox.left * scaleX
+                            val top = detection.boundingBox.top * scaleY
+                            val right = detection.boundingBox.right * scaleX
+                            val bottom = detection.boundingBox.bottom * scaleY
+
+                            // Draw the bounding box
+                            drawRect(
+                                color = Color.Green,
+                                topLeft = Offset(left, top),
+                                size = Size(right - left, bottom - top),
+                                style = Stroke(width = 5f)
+                            )
 //
 //                            // Draw the Label (I.E., "Bulb_Wiz 99%")
-//                            drawContext.canvas.nativeCanvas.drawText(
-//                                "${detection.className} ${(detection.confidence * 100).toInt()}%",
-//                                left,
-//                                top - 10f,
-//                                android.graphics.Paint().apply {
-//                                    color = android.graphics.Color.GREEN
-//                                    textSize = 40f
-//                                    isFakeBoldText = true
-//                                }
-//                            )
-//                        } // End of for-each
-//                    } // End of Canvas
+                            drawContext.canvas.nativeCanvas.drawText(
+                                "${detection.className} ${(detection.confidence * 100).toInt()}%",
+                                left,
+                                top - 10f,
+                                android.graphics.Paint().apply {
+                                    color = android.graphics.Color.GREEN
+                                    textSize = 40f
+                                    isFakeBoldText = true
+                                }
+                            )
+                        } // End of for-each
+                    } // End of Canvas
                 }  // End of Box
-            }
-        }
-    }
-}
+            } // End of Theme
+        } // End of setContent
+    } // End of onCreate
+//    override fun onDestroy() {
+//        // Making sure these dang things get destroyed cause they might be holding onto memory.
+//        if (::converter.isInitialized) {
+//            converter.destroy()
+//        }
+//        super.onDestroy()
+//    }
+} // ARActivity
 
 
 //                ARScene(
