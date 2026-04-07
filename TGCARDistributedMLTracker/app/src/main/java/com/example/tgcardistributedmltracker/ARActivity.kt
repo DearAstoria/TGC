@@ -34,6 +34,7 @@ import io.github.sceneview.node.ModelNode
 import io.github.sceneview.ar.node.AnchorNode
 import android.view.GestureDetector // <--vv Needed for modern implementations
 import android.view.MotionEvent
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -89,6 +90,12 @@ class ARActivity : ComponentActivity() {
 
 
                 Box(modifier = Modifier.fillMaxSize()) {
+                    // ============================================
+                    // TURN TIMER: COUNTS DOWN HOW LONG YOU HAVE TO ATTACK
+                    // ============================================
+                    var turnTime by remember { mutableStateOf(10f) }
+                    val animatedTurnTime by animateFloatAsState(targetValue = turnTime)
+
                     ARScene(
                         // Configure AR session features
                         sessionFeatures = setOf(),
@@ -197,6 +204,17 @@ class ARActivity : ComponentActivity() {
 
                     // The Debug Overlay
                     Canvas(modifier = Modifier.fillMaxSize()) {
+
+                        drawRect(
+                            color = Color.Gray,
+                            topLeft = Offset(20f, 20f),
+                            size = Size(600f, 20f)
+                        )
+                        drawRect(
+                            color = Color.Cyan,
+                            topLeft = Offset(20f, 20f),
+                            size = Size(600f * animatedTurnTime / 10f, 20f)
+                        )
                         currentDetections.forEach { detection ->
                             // YOLOv8 returns 0-640 coordinates; we need to scale them to the screen size
                             val scaleX = size.width / 640f
@@ -206,6 +224,14 @@ class ARActivity : ComponentActivity() {
                             val top = detection.boundingBox.top * scaleY
                             val right = detection.boundingBox.right * scaleX
                             val bottom = detection.boundingBox.bottom * scaleY
+
+                            // CARD GLOW //
+                            drawRoundRect(
+                                color = Color.Cyan.copy(alpha = 0.3f),
+                                topLeft = Offset(left -10f, top - 10f),
+                                size = Size(right - left + 20f, bottom - top + 20f),
+                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(20f, 20f)
+                            )
 
                             // Draw the bounding box
                             drawRect(
@@ -295,6 +321,14 @@ class ARActivity : ComponentActivity() {
                                 val scaleY = size.height / 640f
                                 val centerX = detection.boundingBox.centerX() * scaleX
                                 val topY = detection.boundingBox.top * scaleY
+
+                                // HIT FLASH EFFECT
+                                drawRoundRect(
+                                    color = Color.White.copy(alpha = 0.5f),
+                                    topLeft = Offset(left - 5f, top - 5f),
+                                    size = Size(right - left + 10f, bottom - top + 10f),
+                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(15f, 15f)
+                                )
 
                                 // ANIMATION FOR FLOATING!!!!
                                 damageOffset += 3f
