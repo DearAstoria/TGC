@@ -75,6 +75,18 @@ class ARActivity : ComponentActivity() {
                 var showDamage by remember { mutableStateOf(false) }
                 var damageOffset by remember { mutableStateOf(0f) }
 
+                // SPARK PARTICLE STATE
+                // ADAM ADDED THESE //
+                data class Spark (
+                    var x: Float,
+                    var y: Float,
+                    var vx: Float,
+                    var vy: Float,
+                    var life: Float,
+                )
+
+                var sparks by remember { mutableStateOf(listOf<Spark>()) }
+
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     ARScene(
@@ -303,6 +315,31 @@ class ARActivity : ComponentActivity() {
                                 }
                             }
                         } // End of for-each
+                        // ========================
+                        // SPARK PARTICLE SYSTEM
+                        // ========================
+                        val updatedSparks = mutableListOf<Spark>()
+
+                        sparks.forEach { spark ->
+                            spark.x += spark.vx
+                            spark.y += spark.vy
+                            spark.vy += 0.5f
+                            spark.life -= 0.03f
+
+                            if (spark.life > 0f) {
+                                updatedSparks.add(spark)
+
+                                drawCircle(
+                                    color = Color.Yellow.copy(alpha = spark.life),
+                                    radius = 6f,
+                                    center = Offset(
+                                        spark.x * (size.width / 640f),
+                                        spark.y * (size.height / 640f)
+                                    )
+                                )
+                            }
+                        }
+                        sparks = updatedSparks
                     } // End of Canvas
 
 
@@ -326,6 +363,24 @@ class ARActivity : ComponentActivity() {
                                 damageAmount = (10..30).random()
                                 showDamage = true
                                 damageOffset = 0f
+
+                                // SPAWN SPARKS //
+                                // ADAM ADDED THIS //
+                                if (currentDetections.isNotEmpty()) {
+                                    val detection = currentDetections.first()
+                                    val centerX = detection.boundingBox.centerX().toFloat()
+                                    val centerY = detection.boundingBox.centerY().toFloat()
+
+                                    sparks = List(20) {
+                                        Spark(
+                                            x = centerX,
+                                            y = centerY,
+                                            vx = (-5..5).random().toFloat(),
+                                            vy = (-10..-2).random().toFloat(),
+                                            life = 1f
+                                        )
+                                    }
+                                }
                                 println("Attack button pressed - Damage: $damageAmount")
                             },
                             // This section gives the button rounded corners
