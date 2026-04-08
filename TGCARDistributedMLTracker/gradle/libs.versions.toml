@@ -19,9 +19,6 @@ roomExternalAntlr = "2.8.4"
 identityDoctypesJvm = "202411.1"
 socketIoClient = "2.1.2"
 #supportCoreUtils = "28.0.0"
-roomExternalAntlr = "2.8.4"
-identityDoctypesJvm = "202411.1"
-
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -48,8 +45,6 @@ androidx-room-external-antlr = { group = "androidx.room", name = "room-external-
 identity-doctypes-jvm = { group = "com.android.identity", name = "identity-doctypes-jvm", version.ref = "identityDoctypesJvm" }
 socket-io-client = { module = "io.socket:socket.io-client", version.ref = "socketIoClient" }
 #support-core-utils = { group = "com.android.support", name = "support-core-utils", version.ref = "supportCoreUtils" }
-androidx-room-external-antlr = { group = "androidx.room", name = "room-external-antlr", version.ref = "roomExternalAntlr" }
-identity-doctypes-jvm = { group = "com.android.identity", name = "identity-doctypes-jvm", version.ref = "identityDoctypesJvm" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
