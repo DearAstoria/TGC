@@ -56,3 +56,4 @@ suspend inline fun <reified T> DefaultWebSocketServerSession.sendSerialized(valu
     val json = Json.encodeToString(T::class.serializer(), value)
     send(json)
 }
+
