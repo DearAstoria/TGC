@@ -25,3 +25,18 @@ dependencies {
 application {
    mainClass.set("server.GameServerKt")
 }
+
+android {
+   namespace = "com.yourgame.tcg"
+   compileSdk = 34
+   defaultConfig {
+       minSdk = 21
+       targetSdk = 34
+   }
+   buildFeatures {
+       compose = true
+   }
+   composeOptions {
+       kotlinCompilerExtensionVersion = "1.5.8"
+   }
+}
