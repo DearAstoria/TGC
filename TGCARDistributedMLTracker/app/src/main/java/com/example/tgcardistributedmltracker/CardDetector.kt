@@ -3,14 +3,22 @@ package com.example.tgcardistributedmltracker
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.RectF
+import android.util.Log
+import org.tensorflow.lite.DataType
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+//import com.google.ai.edge.litert.Interpreter
+//import com.google.ai.edge.litert.support.common.FileUtil
+// GPU for later maybe
+// import com.google.ai.edge.litert.gpu.GpuDelegate
+//vvTHESE ARE OUTDATED AS GOOGLE IS REBRANDING TENSORFLOWLITE TO LITERT (LITE RUNTIME)
+//VVTHEY ARE DOING THIS TO BETTER REFLECT ITS ROLE AS HIGH-PERFORMANCE RUNTIME FOR EDGE AI.
 // Core TFLite Interpreter imports
 import org.tensorflow.lite.Interpreter
 //import org.tensorflow.lite.GpuDelegate This will take a few steps
-
 // Support Library import for loading the model file
 import org.tensorflow.lite.support.common.FileUtil
+import org.tensorflow.lite.support.image.TensorImage
 
 data class DetectionResult(
     val classIndex: Int,       // Which card it is (0=Bulb_Wiz, etc.)
@@ -18,6 +26,28 @@ data class DetectionResult(
     val confidence: Float,    // How sure the AI is (0.0 to 1.0)
     val boundingBox: RectF    // The [left, top, right, bottom] coordinates on screen
 )
+
+private fun newConvertBitmapToBuffer(bitmap: Bitmap): ByteBuffer {
+    // 640 * 640 * 3 channels * 4 bytes per Float = 4,915,200 bytes
+    val imgData = ByteBuffer.allocateDirect(1 * 640 * 640 * 3 * 4)
+    imgData.order(ByteOrder.nativeOrder())
+
+    val intValues = IntArray(640 * 640)
+    bitmap.getPixels(intValues, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+
+    imgData.rewind()
+    val floatBuffer = imgData.asFloatBuffer()
+
+    for (pixelValue in intValues) {
+        // Extract RGB and normalize to [0, 1]
+        // We divide by 255.0f because Float32 models don't want 0-255 bytes,
+        // they want normalized percentages.
+        floatBuffer.put(((pixelValue shr 16) and 0xFF) / 255.0f) // Red
+        floatBuffer.put(((pixelValue shr 8) and 0xFF) / 255.0f)  // Green
+        floatBuffer.put((pixelValue and 0xFF) / 255.0f)         // Blue
+    }
+    return imgData
+}
 
 private fun convertBitmapToBuffer(bitmap: Bitmap): ByteBuffer {
     // 640 * 640 * 3 channels (R, G, B).
@@ -114,24 +144,35 @@ private fun calculateIoU(rect1: RectF, rect2: RectF): Float {
 
 class CardDetector(context: Context) {
     private val interpreter: Interpreter
-    private val modelInputSize = 640 // Based off training imgsz
+    private val modelInputSize = 640 // Based off training images.
 
     init {
-    val options = Interpreter.Options().apply {
-        setNumThreads(4)
-        // GPU acceleration:
-//         addDelegate(GpuDelegate())
-    }
-    val tfliteModel = FileUtil.loadMappedFile(context, "best_int8.tflite")
+        val options = Interpreter.Options().apply {
+            setNumThreads(4)
+            // GPU acceleration:
+//          addDelegate(GpuDelegate())
+        }
+        val tfliteModel = FileUtil.loadMappedFile(context, "best_int8.tflite")
         interpreter = Interpreter(tfliteModel, options)
     }
 
     fun detectCard(bitmap: Bitmap): List<DetectionResult> {
+
         // 1. Pre-process: Resize Bitmap to 640x640
         val resizedBitmap = Bitmap.createScaledBitmap(bitmap, modelInputSize, modelInputSize, true)
 
-        // 2. Convert to ByteBuffer (Standardize pixel values 0-255 for INT8)
-        val inputBuffer = convertBitmapToBuffer(resizedBitmap)
+        // Converting the 1.2MB Bitmap into the 4.9MB Float32 buffer that the model needs.
+        val inputDataType = interpreter.getInputTensor(0).dataType() // Check if it's FLOAT32
+        val inputShape = interpreter.getInputTensor(0).shape() // Should be [1, 480, 640, 4] or [1, 640, 480, 4]
+        Log.i("INPUTDATATYPE: ", "${inputDataType}\n")
+        Log.i("INPUTSHAPE: ", "${inputShape}\n")
+        // Using the TFLite Support Library to auto-convert
+        var tensorImage = TensorImage(DataType.FLOAT32)
+        tensorImage.load(resizedBitmap)
+
+        // 2. Convert to ByteBuffer
+        // Normalizing the pixel values into a range of 0.0f - 1.0f that the Float32 model requires.
+        val inputBuffer = newConvertBitmapToBuffer(resizedBitmap)
 
         // 3. Define Output: YOLOv8n output is [1, 9, 8400]
         // (4 box coords + 5 class scores)
