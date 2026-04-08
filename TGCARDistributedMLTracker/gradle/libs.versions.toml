@@ -19,7 +19,6 @@ roomExternalAntlr = "2.8.4"
 identityDoctypesJvm = "202411.1"
 socketIoClient = "2.1.2"
 #supportCoreUtils = "28.0.0"
-
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

@@ -73,9 +73,10 @@ class ARActivity : ComponentActivity() {
                 val scope = rememberCoroutineScope()
                 val cardDetector = remember { CardDetector(context) }
                 var currentDetections by remember { mutableStateOf<List<DetectionResult>>(emptyList()) }
-                Box() {
+                val purpleLog = "\u001B[35m"
+                val reset = "\u001B[0m"
+                Box(Modifier.fillMaxSize()) {
                 ARScene(
-                    modifier = Modifier.fillMaxSize(),
                     planeRenderer = true,
                     onSessionUpdated = { _, frame ->
                         if (anchor == null) {
@@ -118,17 +119,17 @@ class ARActivity : ComponentActivity() {
                                                             currentDetections = detections
         //                                                    // Handling Detections code:
         //                                                    // vv might update the UI here and/or
-        //                                                    // vv creating Anchor 3D models                               vv
+        //                                                    // vv creating Anchor 3D models
                                                             if (!detections.isEmpty()) {
-                                                                Log.i("DETECTIONS: detections not empty", "$detections\n")
                                                                 for (detection in detections) {
-                                                                // 1. Getting the center of the card's bounding box
-                                                                val centerX = detection.boundingBox.centerX()
-                                                                val centerY = detection.boundingBox.centerY()
-        //
-        //                                                        // 2. Performing a Hit-Test to see where that point hits the
-        //                                                        // physical floor/table
-                                                                val hitResults = frame.hitTest(centerX, centerY)
+                                                                    Log.i("${purpleLog}DETECTIONS: detections not empty$reset", "${detections}\n")
+                                                                    // 1. Getting the center of the card's bounding box
+                                                                    val centerX = detection.boundingBox.centerX()
+                                                                    val centerY = detection.boundingBox.centerY()
+            //
+            //                                                        // 2. Performing a Hit-Test to see where that point hits the
+            //                                                        // physical floor/table
+                                                                    val hitResults = frame.hitTest(centerX, centerY)
 //                                                                val hit = hitResults.firstOrNull { it.trackable is Plane }
         //
         //                                                        if (hit != null) {

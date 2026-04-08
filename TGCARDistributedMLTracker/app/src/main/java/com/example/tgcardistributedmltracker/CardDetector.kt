@@ -27,6 +27,27 @@ data class DetectionResult(
     val boundingBox: RectF    // The [left, top, right, bottom] coordinates on screen
 )
 
+// LOOKUP TABLE
+// Key: The name the model has
+// Value: The actual name
+// Because I used the wrong names for the characters when I trained the model *facepalm*.
+private val cardNameTranslation = mapOf(
+    "Fire_Dragon"  to "Bulb_Wiz",
+    "Water_Knight" to "Char",
+    "Earth_Golem"  to "Grim",
+    "Air_Phoenix"  to "Mage",
+    "Void_Mage"    to "Frostbitten_Drakeling"
+)
+
+// The raw list from your data.yaml metadata
+private val modelClasses = listOf(
+    "Fire_Dragon",
+    "Water_Knight",
+    "Earth_Golem",
+    "Air_Phoenix",
+    "Void_Mage"
+)
+
 private fun newConvertBitmapToBuffer(bitmap: Bitmap): ByteBuffer {
     // 640 * 640 * 3 channels * 4 bytes per Float = 4,915,200 bytes
     val imgData = ByteBuffer.allocateDirect(1 * 640 * 640 * 3 * 4)
@@ -71,14 +92,18 @@ private fun convertBitmapToBuffer(bitmap: Bitmap): ByteBuffer {
 
 private fun processOutput(output: Array<Array<FloatArray>>): List<DetectionResult> {
     val results = mutableListOf<DetectionResult>()
-    val classNames = listOf("Bulb_Wiz", "Char", "Grim", "Mage")
+//    val classNames = listOf("Bulb_Wiz", "Char", "Grim", "Mage")
 
     for (i in 0 until 8400) {
         // Find the class with the highest confidence score for this point
         var maxConfidence = 0.0f
         var detectedClassIndex = -1
 
-        // Classes start at index 4 in the '9' dimension
+        // Classes start at index 4
+        // YOLOv8 logic:
+        // Index 0,1,2,3 are x,y,w,h
+        // Index 4,5,6,7 are the scores for the 4 classes
+        // The last class wasn't actually train that's why we don't find any of that type yet.
         for (c in 0 until 5) {
             val confidence = output[0][c + 4][i]
             if (confidence > maxConfidence) {
@@ -87,8 +112,11 @@ private fun processOutput(output: Array<Array<FloatArray>>): List<DetectionResul
             }
         }
 
-        // Only keep detections we are sure about (Threshold = 50%)
+        // We only keep detections we are sure about (Threshold = 50%)
         if (maxConfidence > 0.5f) {
+            val rawModelName = modelClasses.getOrElse(detectedClassIndex) { "Unknown" }
+            val actualName = cardNameTranslation[rawModelName] ?: rawModelName
+
             val x = output[0][0][i]
             val y = output[0][1][i]
             val w = output[0][2][i]
@@ -96,7 +124,7 @@ private fun processOutput(output: Array<Array<FloatArray>>): List<DetectionResul
 
             results.add(DetectionResult(
                 classIndex = detectedClassIndex,
-                className = classNames[detectedClassIndex],
+                className = actualName,
                 confidence = maxConfidence,
                 boundingBox = RectF(x - w/2, y - h/2, x + w/2, y + h/2)
             ))
@@ -174,8 +202,8 @@ class CardDetector(context: Context) {
         // Normalizing the pixel values into a range of 0.0f - 1.0f that the Float32 model requires.
         val inputBuffer = newConvertBitmapToBuffer(resizedBitmap)
 
-        // 3. Define Output: YOLOv8n output is [1, 9, 8400]
-        // (4 box coords + 5 class scores)
+        // 3. Define Output: YOLOv8n output is [1, 8, 8400]
+        // (4 box coords + 4 class scores)
         val output = Array(1) { Array(9) { FloatArray(8400) } }
 
         interpreter.run(inputBuffer, output)
