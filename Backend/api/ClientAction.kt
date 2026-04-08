@@ -13,4 +13,14 @@ sealed class ClientAction {
         val attacker: EntityId,
         val target: EntityId
     ) : ClientAction()
+
+    sealed class ClientAction {
+
+        data class Attack(
+            val attacker: EntityId,
+            val defender: EntityId
+        ) : ClientAction()
+
+        data object EndPhase : ClientAction()
+    }
 }
