@@ -1,5 +1,4 @@
 package server
-
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -7,141 +6,144 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import protocol.*
-import java.time.Duration
+import java.nio.ByteBuffer
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-
-class GameServer(
-    private val port: Int = 8080
-) {
-    private val json = Json { ignoreUnknownKeys = true }
-
-    // Room manager
-    private val rooms = RoomManager()
-
-    // Track which room each session belongs to
-    private val sessionRoom = ConcurrentHashMap<WebSocketSession, String>()
-
-    fun start() {
-        embeddedServer(Netty, port = port) {
-            install(WebSockets) {
-                pingPeriod = Duration.ofSeconds(15)
-                timeout = Duration.ofSeconds(30)
-            }
-
-            routing {
-                webSocket("/game") {
-                    println("Client connected")
-
-                    try {
-                        incoming.consumeEach { frame ->
-                            when (frame) {
-                                is Frame.Text -> handleTextMessage(this, frame.readText())
-                                is Frame.Binary -> handleBinaryMessage(this, frame.data)
-                                else -> Unit
-                            }
-                        }
-                    } finally {
-                        println("Client disconnected")
-                        sessionRoom.remove(this)
-                    }
-                }
-            }
-        }.start(wait = false)
-    }
-
-    // -------------------------------
-    // TEXT MESSAGE HANDLING (Rooms, Turns, PlayCard)
-    // -------------------------------
-    private suspend fun handleTextMessage(
-        session: WebSocketSession,
-        raw: String
-    ) {
-        val msg = try {
-            json.decodeFromString<ClientMessage>(raw)
-        } catch (e: Exception) {
-            session.send(json.encodeToString(ServerMessage.Error("Invalid message format")))
-            return
-        }
-
-        when (msg) {
-
-            // -------------------------------
-            // HOST ROOM
-            // -------------------------------
-            is ClientMessage.HostRoom -> {
-                val room = rooms.createRoom(msg.playerName, session)
-                sessionRoom[session] = room.code
-
-                session.send(json.encodeToString(ServerMessage.RoomCreated(room.code)))
-            }
-
-            // -------------------------------
-            // JOIN ROOM
-            // -------------------------------
-            is ClientMessage.JoinRoom -> {
-                val room = rooms.joinRoom(msg.roomCode, msg.playerName, session)
-                if (room == null) {
-                    session.send(json.encodeToString(ServerMessage.RoomError("Room not found")))
-                    return
-                }
-
-                sessionRoom[session] = room.code
-
-                val players = rooms.getPlayers(room.code)
-                val payload = json.encodeToString(ServerMessage.RoomJoined(room.code, players))
-
-                room.players.forEach { it.session.send(payload) }
-            }
-
-            // -------------------------------
-            // PLAY CARD
-            // -------------------------------
-            is ClientMessage.PlayCard -> {
-                val roomCode = sessionRoom[session] ?: return
-                broadcastToRoom(roomCode, ServerMessage.GameStateUpdate("{\"event\":\"play\"}"))
-            }
-
-            // -------------------------------
-            // END TURN
-            // -------------------------------
-            is ClientMessage.EndTurn -> {
-                val roomCode = sessionRoom[session] ?: return
-                broadcastToRoom(roomCode, ServerMessage.GameStateUpdate("{\"event\":\"endTurn\"}"))
-            }
-
-            else -> Unit
-        }
-    }
-
-    // -------------------------------
-    // BINARY MESSAGE HANDLING (X,Y,Z)
-    // -------------------------------
-    private suspend fun handleBinaryMessage(
-        session: WebSocketSession,
-        bytes: ByteArray
-    ) {
-        val roomCode = sessionRoom[session] ?: return
-
-        val move = try {
-            BinaryProtocol.decodeMoveCard(bytes)
-        } catch (e: Exception) {
-            session.send(json.encodeToString(ServerMessage.Error("Invalid binary packet")))
-            return
-        }
-
-        val msg = ServerMessage.CardMoved(move.cardId, move.x, move.y, move.z)
-        broadcastToRoom(roomCode, msg)
-    }
-
-    // -------------------------------
-    // BROADCAST HELPERS
-    // -------------------------------
-    private suspend fun broadcastToRoom(roomCode: String, msg: ServerMessage) {
-        val room = rooms.getRoom(roomCode) ?: return
-        val payload = json.encodeToString(msg)
-        room.players.forEach { it.session.send(payload) }
-    }
+fun main() {
+   embeddedServer(Netty, port = 8080) {
+       install(WebSockets)
+       routing {
+           webSocket("/game") {
+               GameServer.handleConnection(this)
+           }
+       }
+   }.start(wait = true)
+}
+object GameServer {
+   private val rooms = ConcurrentHashMap<String, GameRoom>()
+   suspend fun handleConnection(session: WebSocketSession) {
+       var player: Player? = null
+       var room: GameRoom? = null
+       try {
+           session.incoming.consumeEach { frame ->
+               when (frame) {
+                   is Frame.Text -> {
+                       val text = frame.readText()
+                       val msg = Json.decodeFromString(ClientMessage.serializer(), text)
+                       when (msg) {
+                           is ClientMessage.HostRoom -> {
+                               val code = generateRoomCode()
+                               val newRoom = GameRoom(code)
+                               rooms[code] = newRoom
+                               player = newRoom.addPlayer(msg.playerName, session)
+                               room = newRoom
+                               session.sendSerialized(ServerMessage.RoomCreated(code))
+                           }
+                           is ClientMessage.JoinRoom -> {
+                               val joinRoom = rooms[msg.roomCode]
+                               if (joinRoom != null) {
+                                   player = joinRoom.addPlayer(msg.playerName, session)
+                                   room = joinRoom
+                                   session.sendSerialized(
+                                       ServerMessage.RoomJoined(
+                                           roomCode = msg.roomCode,
+                                           players = joinRoom.players.map { it.name },
+                                           yourPlayerId = player!!.id
+                                       )
+                                   )
+                                   joinRoom.broadcast(
+                                       ServerMessage.PlayerJoined(msg.playerName)
+                                   )
+                               }
+                           }
+                           is ClientMessage.CardMove -> {
+                               room?.broadcast(
+                                   ServerMessage.CardMoved(
+                                       cardId = msg.cardId,
+                                       x = msg.x,
+                                       y = msg.y,
+                                       z = msg.z,
+                                       playerId = player!!.id
+                                   )
+                               )
+                           }
+                           is ClientMessage.Chat -> {
+                               room?.broadcast(
+                                   ServerMessage.ChatBroadcast(
+                                       playerName = msg.playerName,
+                                       message = msg.message
+                                   )
+                               )
+                           }
+                           is ClientMessage.EndTurn -> {
+                               // You can expand this later
+                           }
+                           ClientMessage.Ping -> {
+                               session.sendSerialized(ServerMessage.Pong)
+                           }
+                       }
+                   }
+                   is Frame.Binary -> {
+                       val bytes = frame.readBytes()
+                       if (bytes.isNotEmpty() && bytes[0] == 0x01.toByte()) {
+                           val move = decodeBinaryMove(bytes)
+                           room?.broadcast(
+                               ServerMessage.CardMoved(
+                                   cardId = move.cardId,
+                                   x = move.x,
+                                   y = move.y,
+                                   z = move.z,
+                                   playerId = player!!.id
+                               )
+                           )
+                       }
+                   }
+                   else -> {}
+               }
+           }
+       } finally {
+           if (player != null && room != null) {
+               room.removePlayer(player!!)
+           }
+       }
+   }
+   private fun generateRoomCode(): String =
+       (1000..9999).random().toString()
+   private fun decodeBinaryMove(bytes: ByteArray): ClientMessage.CardMove {
+       val buffer = ByteBuffer.wrap(bytes)
+       buffer.position(1)
+       val cardId = buffer.int
+       val x = buffer.float
+       val y = buffer.float
+       val z = buffer.get().toInt()
+       return ClientMessage.CardMove(cardId, x, y, z)
+   }
+}
+data class Player(
+   val id: Int,
+   val name: String,
+   val session: WebSocketSession
+)
+class GameRoom(val code: String) {
+   private val _players = Collections.synchronizedList(mutableListOf<Player>())
+   val players: List<Player> get() = _players
+   private var nextPlayerId = 1
+   fun addPlayer(name: String, session: WebSocketSession): Player {
+       val player = Player(nextPlayerId++, name, session)
+       _players.add(player)
+       return player
+   }
+   fun removePlayer(player: Player) {
+       _players.remove(player)
+   }
+   suspend fun broadcast(msg: ServerMessage) {
+       val json = Json.encodeToString(ServerMessage.serializer(), msg)
+       _players.forEach { it.session.send(Frame.Text(json)) }
+   }
+}
+suspend fun WebSocketSession.sendSerialized(msg: ServerMessage) {
+   val json = Json.encodeToString(ServerMessage.serializer(), msg)
+   send(Frame.Text(json))
 }
