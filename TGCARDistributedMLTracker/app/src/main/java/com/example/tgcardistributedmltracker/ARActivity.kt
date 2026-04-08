@@ -98,11 +98,7 @@ class ARActivity : ComponentActivity() {
                 converter = remember { YuvToRgbConverter(context) }
                 val scope = rememberCoroutineScope()
                 val cardDetector = remember { CardDetector(context) }
-                var currentDetections: List<DetectionResult> by remember { mutableStateOf<List<DetectionResult>>(emptyList())
-//                var engine = rememberEngine()
-//                var arSceneView: ARSceneView? = null
-//                val materialLoader = remember { io.github.sceneview.loaders.MaterialLoader(engine,context) }
-                var lastInferenceTime: Long = 0
+                var currentDetections: List<DetectionResult> by remember { mutableStateOf<List<DetectionResult>>(emptyList())}
                 var damageAmount by remember { mutableStateOf(0) }
                 var showDamage by remember { mutableStateOf(false) }
                 var damageOffset by remember { mutableStateOf(0f) }
@@ -121,10 +117,8 @@ class ARActivity : ComponentActivity() {
                 // ============================================
                 var turnTime by remember { mutableStateOf(10f) }
                 val animatedTurnTime by animateFloatAsState(targetValue = turnTime)
-                }
-                Box() {
+                Box(Modifier.fillMaxSize()) {
                 ARScene(
-                    modifier = Modifier.fillMaxSize(),
                     planeRenderer = true,
                     onSessionUpdated = { _, frame ->
                         if (anchor == null) {
@@ -410,41 +404,8 @@ class ARActivity : ComponentActivity() {
                             }
                         }
                         sparks = updatedSparks
+
                     } // End of Canvas
-                    } // End of Canvas
-                }  // End of Box
-            } // End of Theme
-        } // End of setContent
-    } // End of onCreate
-} // ARActivity
-                        // ========================
-                        // SPARK PARTICLE SYSTEM
-                        // ========================
-                        val updatedSparks = mutableListOf<Spark>()
-
-                        sparks.forEach { spark ->
-                            spark.x += spark.vx
-                            spark.y += spark.vy
-                            spark.vy += 0.5f
-                            spark.life -= 0.03f
-
-                            if (spark.life > 0f) {
-                                updatedSparks.add(spark)
-
-                                drawCircle(
-                                    color = Color.Yellow.copy(alpha = spark.life),
-                                    radius = 6f,
-                                    center = Offset(
-                                        spark.x * (size.width / 640f),
-                                        spark.y * (size.height / 640f)
-                                    )
-                                )
-                            }
-                        }
-                        sparks = updatedSparks
-                    } // End of Canvas
-
-
                     // ADAM ADDED THESE /////////////////////////////////////////////////////////////////
                     // ADDED MORE NOTES LIKE IN JADENS' CODE EXPLAINING WHAT THINGS ARE
                     // ============================
@@ -502,8 +463,8 @@ class ARActivity : ComponentActivity() {
                             )
                         }
                     }
-                }  // End of Box
-            }
-        }
-    }
-}
+                }  // End of Attack Box
+            } // End of Theme
+        } // End of setContent
+    } // End of onCreate
+} // ARActivity
