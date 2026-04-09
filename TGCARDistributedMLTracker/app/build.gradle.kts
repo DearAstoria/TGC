@@ -62,6 +62,8 @@ dependencies {
     implementation(libs.androidx.room.external.antlr)
     implementation(libs.identity.doctypes.jvm)
 //    implementation(libs.support.core.utils)
+    implementation(libs.androidx.room.external.antlr)
+    implementation(libs.identity.doctypes.jvm)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
 //    androidTestImplementation(libs.androidx.espresso.core)

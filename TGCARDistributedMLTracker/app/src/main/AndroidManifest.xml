@@ -52,5 +52,4 @@
             android:value="required"
             tools:replace="android:value"/>
     </application>
-
 </manifest>
